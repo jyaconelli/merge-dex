@@ -4,7 +4,8 @@ A lightweight Clash Royale **Merge Tactics** helper built with Next.js.
 
 ## What it does
 
-- Lets you select your current roster.
+- Displays a troop catalog with each troop's two traits and elixir cost.
+- Lets you select your current roster and track each selected troop's current star level (1★–4★).
 - Lets you choose a tactical optimization path:
   - Goblin Tempo
   - Assassin Backline Dive

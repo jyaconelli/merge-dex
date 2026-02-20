@@ -3,10 +3,12 @@
 import { useMemo, useState } from "react";
 
 type TacticId = "goblinTempo" | "assassinDive" | "econDeny";
+type StarLevel = 1 | 2 | 3 | 4;
 
 type Unit = {
   name: string;
   traits: [string, string];
+  elixir: number;
   role: "Frontline" | "Backline" | "Utility";
   notes: string;
 };
@@ -26,18 +28,30 @@ type TacticTree = {
 };
 
 const UNITS: Unit[] = [
-  { name: "Goblins", traits: ["Goblin", "Ace"], role: "Utility", notes: "Fast starter and merge-friendly." },
-  { name: "Spear Goblins", traits: ["Goblin", "Blaster"], role: "Backline", notes: "Cheap ranged pressure." },
-  { name: "Goblin Machine", traits: ["Goblin", "Brutalist"], role: "Frontline", notes: "Scales hard with stars." },
-  { name: "Bandit", traits: ["Assassin", "Ace"], role: "Utility", notes: "Jumps to fragile backline units." },
-  { name: "Mega Knight", traits: ["Assassin", "Brutalist"], role: "Frontline", notes: "Heavy disruptor and stall tank." },
-  { name: "Archer Queen", traits: ["Clan", "Superstar"], role: "Backline", notes: "Top-end carry when protected." },
-  { name: "Valkyrie", traits: ["Clan", "Ranger"], role: "Frontline", notes: "Solid anti-swarm frontliner." },
-  { name: "Prince", traits: ["Noble", "Executioner"], role: "Frontline", notes: "Single-target breaker." },
-  { name: "Royal Ghost", traits: ["Undead", "Assassin"], role: "Utility", notes: "Backline threat + utility." },
-  { name: "Witch", traits: ["Undead", "Superstar"], role: "Backline", notes: "Summons pressure and sustain." },
-  { name: "Musketeer", traits: ["Noble", "Superstar"], role: "Backline", notes: "Reliable ranged DPS." },
-  { name: "PEKKA", traits: ["P.E.K.K.A", "Brutalist"], role: "Frontline", notes: "High-cost late-game closer." },
+  { name: "Bandit", traits: ["Assassin", "Ace"], elixir: 3, role: "Utility", notes: "Jumps onto fragile backline targets." },
+  { name: "Executioner", traits: ["Assassin", "Blaster"], elixir: 3, role: "Backline", notes: "AoE ranged pressure in dive comps." },
+  { name: "Mega Knight", traits: ["Assassin", "Brutalist"], elixir: 4, role: "Frontline", notes: "Heavy disruption and stall tank." },
+  { name: "Monk", traits: ["Assassin", "Superstar"], elixir: 4, role: "Frontline", notes: "Durable anti-projectile bruiser." },
+  { name: "Wizard", traits: ["Clan", "Blaster"], elixir: 3, role: "Backline", notes: "Reliable AoE blaster damage." },
+  { name: "Barbarians", traits: ["Clan", "Brawler"], elixir: 2, role: "Frontline", notes: "Cheap early frontline body." },
+  { name: "Valkyrie", traits: ["Clan", "Brutalist"], elixir: 3, role: "Frontline", notes: "Strong anti-swarm frontliner." },
+  { name: "Archer Queen", traits: ["Clan", "Superstar"], elixir: 4, role: "Backline", notes: "Top-end carry when protected." },
+  { name: "Royal Giant", traits: ["Giant", "Ranger"], elixir: 4, role: "Backline", notes: "Long-range giant trait carry." },
+  { name: "Electro Giant", traits: ["Giant", "Superstar"], elixir: 4, role: "Frontline", notes: "Punishes high hit-speed enemies." },
+  { name: "Goblins", traits: ["Goblin", "Assassin"], elixir: 2, role: "Utility", notes: "Fast starter and merge-friendly." },
+  { name: "Spear Goblins", traits: ["Goblin", "Blaster"], elixir: 2, role: "Backline", notes: "Cheap ranged pressure." },
+  { name: "Goblin Machine", traits: ["Goblin", "Brutalist"], elixir: 4, role: "Frontline", notes: "Scales hard with stars." },
+  { name: "Dart Goblin", traits: ["Goblin", "Ranger"], elixir: 3, role: "Backline", notes: "Rapid poke damage from safety." },
+  { name: "PEKKA", traits: ["P.E.K.K.A", "Brawler"], elixir: 4, role: "Frontline", notes: "High-cost late-game closer." },
+  { name: "Mini PEKKA", traits: ["P.E.K.K.A", "Brutalist"], elixir: 3, role: "Frontline", notes: "Efficient single-target burst." },
+  { name: "Golden Knight", traits: ["Noble", "Assassin"], elixir: 4, role: "Utility", notes: "Dash resets can swing rounds." },
+  { name: "Princess", traits: ["Noble", "Blaster"], elixir: 3, role: "Backline", notes: "Safe long-range splash pressure." },
+  { name: "Prince", traits: ["Noble", "Brawler"], elixir: 3, role: "Frontline", notes: "Single-target breaker." },
+  { name: "Musketeer", traits: ["Noble", "Superstar"], elixir: 3, role: "Backline", notes: "Reliable ranged DPS." },
+  { name: "Royal Ghost", traits: ["Undead", "Assassin"], elixir: 3, role: "Utility", notes: "Stealth backline threat." },
+  { name: "Skeleton King", traits: ["Undead", "Brutalist"], elixir: 4, role: "Frontline", notes: "Sustained frontline with summon pressure." },
+  { name: "Skeleton Dragons", traits: ["Undead", "Ranger"], elixir: 2, role: "Backline", notes: "Wide-area ranged burn pressure." },
+  { name: "Witch", traits: ["Undead", "Superstar"], elixir: 3, role: "Backline", notes: "Summons pressure and sustain." },
 ];
 
 const TACTIC_TREES: TacticTree[] = [
@@ -85,9 +99,7 @@ const TACTIC_TREES: TacticTree[] = [
         { unit: "Musketeer", score: 84, reason: "Reliable cleanup DPS while assassins split enemy backline." },
         { unit: "Witch", score: 79, reason: "Summons create chaos and draw aggro away from divers." },
       ],
-      Musketeer: [
-        { unit: "Archer Queen", score: 83, reason: "Upside carry to close rounds when dives connect." },
-      ],
+      Musketeer: [{ unit: "Archer Queen", score: 83, reason: "Upside carry to close rounds when dives connect." }],
     },
   },
   {
@@ -105,12 +117,8 @@ const TACTIC_TREES: TacticTree[] = [
         { unit: "Prince", score: 92, reason: "Improves single-target breakpoints and pressure on tanks." },
         { unit: "Witch", score: 84, reason: "Summons buy time while you play economy cycles." },
       ],
-      Musketeer: [
-        { unit: "Valkyrie", score: 80, reason: "Cheap stabilization line when econ path is under pressure." },
-      ],
-      Witch: [
-        { unit: "Archer Queen", score: 78, reason: "High cap pivot after stabilizing economy." },
-      ],
+      Musketeer: [{ unit: "Valkyrie", score: 80, reason: "Cheap stabilization line when econ path is under pressure." }],
+      Witch: [{ unit: "Archer Queen", score: 78, reason: "High cap pivot after stabilizing economy." }],
     },
   },
 ];
@@ -121,13 +129,14 @@ function getUnit(name: string) {
 
 export default function Home() {
   const [selectedTactic, setSelectedTactic] = useState<TacticId>("goblinTempo");
-  const [roster, setRoster] = useState<string[]>([]);
+  const [rosterStars, setRosterStars] = useState<Record<string, StarLevel>>({});
 
   const tactic = useMemo(
     () => TACTIC_TREES.find((tree) => tree.id === selectedTactic) ?? TACTIC_TREES[0],
     [selectedTactic],
   );
 
+  const roster = useMemo(() => Object.keys(rosterStars), [rosterStars]);
   const rosterSet = useMemo(() => new Set(roster), [roster]);
 
   const suggestions = useMemo(() => {
@@ -160,9 +169,23 @@ export default function Home() {
   }, [roster, rosterSet, tactic]);
 
   const toggleUnit = (name: string) => {
-    setRoster((previous) =>
-      previous.includes(name) ? previous.filter((unit) => unit !== name) : [...previous, name],
-    );
+    setRosterStars((previous) => {
+      if (previous[name]) {
+        const next = { ...previous };
+        delete next[name];
+        return next;
+      }
+      return { ...previous, [name]: 1 };
+    });
+  };
+
+  const setStarLevel = (name: string, direction: "up" | "down") => {
+    setRosterStars((previous) => {
+      const current = previous[name] ?? 1;
+      const nextLevel =
+        direction === "up" ? Math.min(4, current + 1) : Math.max(1, current - 1);
+      return { ...previous, [name]: nextLevel as StarLevel };
+    });
   };
 
   return (
@@ -195,10 +218,14 @@ export default function Home() {
         </section>
 
         <section className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-          <h2 className="text-lg font-semibold">2) Select current roster</h2>
+          <h2 className="text-lg font-semibold">2) Troop catalog + current roster stars</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Tap a troop to add/remove it from your roster. For selected troops, use + / - to track merges up to 4★.
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {UNITS.map((unit) => {
-              const selected = roster.includes(unit.name);
+              const selected = Boolean(rosterStars[unit.name]);
+              const stars = rosterStars[unit.name] ?? 1;
               return (
                 <button
                   key={unit.name}
@@ -209,10 +236,36 @@ export default function Home() {
                 >
                   <div className="flex items-center justify-between">
                     <p className="font-medium">{unit.name}</p>
-                    <span className="text-xs text-slate-400">{unit.role}</span>
+                    <span className="text-xs text-slate-400">{unit.elixir} Elixir</span>
                   </div>
                   <p className="mt-2 text-xs text-slate-400">Traits: {unit.traits.join(" + ")}</p>
+                  <p className="mt-2 text-xs text-slate-400">Role: {unit.role}</p>
                   <p className="mt-2 text-sm text-slate-300">{unit.notes}</p>
+                  {selected ? (
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-300">{stars}★</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setStarLevel(unit.name, "down");
+                        }}
+                        className="rounded border border-slate-600 px-2 py-1 text-xs hover:border-slate-400"
+                      >
+                        -
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setStarLevel(unit.name, "up");
+                        }}
+                        className="rounded border border-slate-600 px-2 py-1 text-xs hover:border-slate-400"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : null}
                 </button>
               );
             })}
@@ -234,7 +287,7 @@ export default function Home() {
                   </div>
                   <p className="mt-2 text-sm text-slate-300">{choice.reason}</p>
                   <p className="mt-2 text-xs text-slate-400">
-                    Source node: {choice.parent} • Traits: {unit?.traits.join(" + ") ?? "Unknown"}
+                    Source node: {choice.parent} • Traits: {unit?.traits.join(" + ") ?? "Unknown"} • Cost: {unit?.elixir ?? "?"} elixir
                   </p>
                 </article>
               );
